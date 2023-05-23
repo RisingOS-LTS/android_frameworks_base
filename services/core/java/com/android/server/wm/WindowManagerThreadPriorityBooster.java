@@ -28,6 +28,8 @@ import static com.android.server.LockGuard.INDEX_WINDOW;
 
 import android.os.SystemProperties;
 
+import android.os.SystemProperties;
+
 import com.android.internal.annotations.GuardedBy;
 import com.android.server.AnimationThread;
 import com.android.server.ThreadPriorityBooster;
