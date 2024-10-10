@@ -888,7 +888,8 @@ public class ApplicationPackageManager extends PackageManager {
         }
         if (Arrays.asList(featuresPixel).contains(name)) return true;
         if (Arrays.asList(featuresAndroid).contains(name)) return true;
-        return mHasSystemFeatureCache.query(new HasSystemFeatureQuery(name, version));
+        boolean hasSystemFeature = mHasSystemFeatureCache.query(new HasSystemFeatureQuery(name, version));
+        return com.android.internal.util.android.FeatureHooksUtils.hasSystemFeature(name, version, hasSystemFeature);
     }
 
     /** @hide */
