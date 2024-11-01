@@ -219,12 +219,10 @@ class MediaDataManager(
     private var smartspaceSession: SmartspaceSession? = null
     private var allowMediaRecommendations = allowMediaRecommendations(context)
 
-    private val artworkWidth =
-        context.resources.getDimensionPixelSize(
-            com.android.internal.R.dimen.config_mediaMetadataBitmapMaxSize
-        )
-    private val artworkHeight =
-        context.resources.getDimensionPixelSize(R.dimen.qs_media_session_height_expanded)
+    private val artworkWidth = context.getResources().getInteger(
+                        com.android.internal.R.integer.config_maxBitmapSizePx)
+    private val artworkHeight = context.getResources().getInteger(
+                        com.android.internal.R.integer.config_maxBitmapSizePx)
 
     /** Check whether this notification is an RCN */
     private fun isRemoteCastNotification(sbn: StatusBarNotification): Boolean {
