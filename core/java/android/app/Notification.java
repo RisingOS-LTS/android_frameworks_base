@@ -9612,9 +9612,7 @@ public class Notification implements Parcelable
             super.reduceImageSizes(context);
             if (mVerificationIcon != null) {
                 int rightIconSize = context.getResources().getDimensionPixelSize(
-                        ActivityManager.isLowRamDeviceStatic()
-                                ? R.dimen.notification_right_icon_size_low_ram
-                                : R.dimen.notification_right_icon_size);
+                        R.dimen.notification_right_icon_size_low_ram);
                 mVerificationIcon.scaleDownIfNecessary(rightIconSize, rightIconSize);
             }
         }
