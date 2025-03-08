@@ -36,9 +36,9 @@ import java.util.concurrent.TimeUnit;
 public final class PropImitationService extends SystemService {
     private static final String TAG = PropImitationService.class.getSimpleName();
     private static final String PROPS_API = 
-            "https://raw.githubusercontent.com/pyo3377/vendor/main/props.json";
+            "https://raw.githubusercontent.com/device-xti/vendor/main/props.json";
     private static final String KEYS_API = 
-            "https://raw.githubusercontent.com/pyo3377/vendor/main/keys.xml";
+            "https://raw.githubusercontent.com/device-xti/vendor/main/keys.xml";
 
     private static final String PROPS_FILE = "props.json";
     private static final String KEYS_FILE = "keys.xml";
