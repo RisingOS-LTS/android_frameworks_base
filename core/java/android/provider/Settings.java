@@ -11956,6 +11956,13 @@ public final class Settings {
          * @hide
          */
         public static final String PREF_KG_USER_SWITCHER = "pref_kg_user_switcher";
+        
+        /**
+         * User selectable keybox data.
+         * @hide
+         */
+        @Readable
+        public static final String KEYBOX_DATA = "keybox_data";
 
         /**
          * Whether to show privacy indicator for location
