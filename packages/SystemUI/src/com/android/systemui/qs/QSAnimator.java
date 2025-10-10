@@ -431,6 +431,11 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
                     firstPageBuilder.addFloat(isA11Style ? tileView.getLabelContainer() : tileView.getSecondaryLabel(), "alpha", 0, 1);
                     mAllViews.add(isA11Style ? tileView.getLabelContainer() : tileView.getSecondaryLabel());
                 }
+               
+                QSTileView quickTileView = mQuickQSPanelController.getTileView(tile);
+                if (quickTileView != null) {
+                    quickTileView.getSecondaryLabel().setAlpha(0f);
+                }
 
                 mAllViews.add(tileView);
                 count++;
