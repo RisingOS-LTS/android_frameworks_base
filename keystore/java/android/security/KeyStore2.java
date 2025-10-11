@@ -30,7 +30,7 @@ import android.system.keystore2.KeyDescriptor;
 import android.system.keystore2.KeyEntryResponse;
 import android.system.keystore2.ResponseCode;
 import android.util.Log;
-import com.android.internal.util.crdroid.KeyboxImitationHooks;
+import com.android.internal.util.rising.KeyboxImitationHooks;
 
 import java.util.Calendar;
 

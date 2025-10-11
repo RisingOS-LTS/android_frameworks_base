@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2024 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.android.internal.util.crdroid;
+package com.android.internal.util.rising;
 
 import android.os.SystemProperties;
 import android.security.KeyChain;
