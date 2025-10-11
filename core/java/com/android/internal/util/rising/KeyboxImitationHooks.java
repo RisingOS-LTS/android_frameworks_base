@@ -17,7 +17,7 @@ import android.system.keystore2.KeyEntryResponse;
 import android.system.keystore2.KeyMetadata;
 import android.util.Log;
 
-import com.android.internal.util.crdroid.KeyboxChainGenerator.KeyGenParameters;
+import com.android.internal.util.rising.KeyboxChainGenerator.KeyGenParameters;
 
 import java.security.cert.Certificate;
 import java.util.ArrayList;

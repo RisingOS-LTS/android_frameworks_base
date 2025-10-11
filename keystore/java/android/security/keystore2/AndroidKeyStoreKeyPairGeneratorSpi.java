@@ -53,7 +53,7 @@ import android.telephony.TelephonyManager;
 import android.util.ArraySet;
 import android.util.Log;
 
-import com.android.internal.util.crdroid.KeyboxImitationHooks;
+import com.android.internal.util.rising.KeyboxImitationHooks;
 
 import libcore.util.EmptyArray;
 
