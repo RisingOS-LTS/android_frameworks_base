@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.internal.util.crdroid;
+package com.android.internal.util.rising;
 
 import android.app.AlertDialog;
 import android.app.IActivityManager;
