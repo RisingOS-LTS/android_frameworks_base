@@ -4954,7 +4954,5 @@
   <!-- List of protected packages that require biometric authentication for modification -->
   <java-symbol type="array" name="config_biometric_protected_package_names" />
 
-  <!-- Build properties from a GMS certified device against current platform SPL level -->
-  <java-symbol type="array" name="config_certifiedBuildProperties" />
 
 </resources>

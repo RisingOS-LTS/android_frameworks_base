@@ -123,7 +123,6 @@ import com.android.server.compat.PlatformCompatNative;
 import com.android.server.connectivity.PacProxyService;
 import com.android.server.contentcapture.ContentCaptureManagerInternal;
 import com.android.server.coverage.CoverageService;
-import com.android.server.rising.AttestationService;
 import com.android.server.devicepolicy.DevicePolicyManagerService;
 import com.android.server.devicestate.DeviceStateManagerService;
 import com.android.server.display.DisplayManagerService;
@@ -2551,10 +2550,6 @@ public final class SystemServer implements Dumpable {
             mSystemServiceManager.startService(MediaMetricsManagerService.class);
             t.traceEnd();
         }
-        // AttestationService
-            t.traceBegin("AttestationService");
-            mSystemServiceManager.startService(AttestationService.class);
-            t.traceEnd();
 
         t.traceBegin("StartMediaProjectionManager");
         mSystemServiceManager.startService(MediaProjectionManagerService.class);
