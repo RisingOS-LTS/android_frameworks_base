@@ -911,9 +911,7 @@ public class ApplicationPackageManager extends PackageManager {
             if (Manifest.permission.INTERNET.equals(permName)
                     // don't rely on Context.getPackageName(), may be different from process package name
                     && pkgName.equals(ActivityThread.currentPackageName())
-                    && pkgName.toLowerCase().contains("microsoft")
-                    && pkgName.toLowerCase().contains("com.android")
-                    && pkgName.toLowerCase().contains("google"))
+                    && pkgName.startsWith("com.microsoft"))
             {
                 return PERMISSION_GRANTED;
             }
