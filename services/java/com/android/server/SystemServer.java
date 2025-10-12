@@ -208,7 +208,6 @@ import com.android.server.tv.tunerresourcemanager.TunerResourceManagerService;
 import com.android.server.twilight.TwilightService;
 import com.android.server.uri.UriGrantsManagerService;
 import com.android.server.usage.UsageStatsService;
-import com.android.server.utils.PropImitationService;
 import com.android.server.utils.TimingsTraceAndSlog;
 import com.android.server.vibrator.VibratorManagerService;
 import com.android.server.vr.VrManagerService;
@@ -3115,11 +3114,6 @@ public final class SystemServer implements Dumpable {
         } catch (Throwable e) {
             reportWtf("starting System UI", e);
         }
-        t.traceEnd();
-
-        // PropImitiationService
-        t.traceBegin("PropImitationService");
-        mSystemServiceManager.startService(PropImitationService.class);
         t.traceEnd();
 
         t.traceEnd(); // startOtherServices

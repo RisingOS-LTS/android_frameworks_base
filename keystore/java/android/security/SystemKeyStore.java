@@ -18,9 +18,6 @@ package android.security;
 
 import android.os.Environment;
 import android.os.FileUtils;
-import android.os.StrictMode;
-
-import libcore.io.IoUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,6 +27,8 @@ import java.security.SecureRandom;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+
+import libcore.io.IoUtils;
 
 /**
  *@hide
@@ -70,7 +69,6 @@ public class SystemKeyStore {
 
     public byte[] generateNewKey(int numBits, String algName, String keyName)
             throws NoSuchAlgorithmException {
-        StrictMode.noteDiskWrite();
 
         // Check if key with similar name exists. If so, return null.
         File keyFile = getKeyFile(keyName);
@@ -105,7 +103,6 @@ public class SystemKeyStore {
     }
 
     private File getKeyFile(String keyName) {
-        StrictMode.noteDiskWrite();
         File sysKeystoreDir = new File(Environment.getDataDirectory(),
                 SYSTEM_KEYSTORE_DIRECTORY);
         File keyFile = new File(sysKeystoreDir, keyName + KEY_FILE_EXTENSION);
@@ -117,7 +114,6 @@ public class SystemKeyStore {
     }
 
     public byte[] retrieveKey(String keyName) throws IOException {
-        StrictMode.noteDiskRead();
         File keyFile = getKeyFile(keyName);
         if (!keyFile.exists()) {
             return null;
@@ -126,7 +122,6 @@ public class SystemKeyStore {
     }
 
     public void deleteKey(String keyName) {
-        StrictMode.noteDiskWrite();
 
         // Get the file first.
         File keyFile = getKeyFile(keyName);

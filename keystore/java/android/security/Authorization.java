@@ -22,7 +22,6 @@ import android.hardware.security.keymint.HardwareAuthToken;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.ServiceSpecificException;
-import android.os.StrictMode;
 import android.security.authorization.IKeystoreAuthorization;
 import android.security.authorization.LockScreenEvent;
 import android.system.keystore2.ResponseCode;
@@ -49,7 +48,6 @@ public class Authorization {
      * @return 0 if successful or {@code ResponseCode.SYSTEM_ERROR}.
      */
     public static int addAuthToken(@NonNull HardwareAuthToken authToken) {
-        StrictMode.noteSlowCall("addAuthToken");
         try {
             getService().addAuthToken(authToken);
             return 0;
@@ -83,7 +81,6 @@ public class Authorization {
      */
     public static int onLockScreenEvent(@NonNull boolean locked, @NonNull int userId,
             @Nullable byte[] syntheticPassword, @Nullable long[] unlockingSids) {
-        StrictMode.noteDiskWrite();
         try {
             if (locked) {
                 getService().onLockScreenEvent(LockScreenEvent.LOCK, userId, null, unlockingSids);

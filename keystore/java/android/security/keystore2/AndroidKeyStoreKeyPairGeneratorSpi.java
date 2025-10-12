@@ -29,7 +29,6 @@ import android.os.Build;
 import android.os.RemoteException;
 import android.security.GenerateRkpKey;
 import android.security.IGenerateRkpKeyService;
-import android.os.StrictMode;
 import android.security.KeyPairGeneratorSpec;
 import android.security.KeyStore2;
 import android.security.KeyStoreException;
@@ -657,7 +656,6 @@ public abstract class AndroidKeyStoreKeyPairGeneratorSpi extends KeyPairGenerato
     }
 
     private GenerateKeyPairHelperResult generateKeyPairHelper() {
-        StrictMode.noteSlowCall("generateKeyPair");
         if (mKeyStore == null || mSpec == null) {
             throw new IllegalStateException("Not initialized");
         }

@@ -19,7 +19,6 @@ package android.security;
 import android.annotation.NonNull;
 import android.os.ServiceManager;
 import android.os.ServiceSpecificException;
-import android.os.StrictMode;
 import android.security.legacykeystore.ILegacyKeystore;
 import android.util.Log;
 
@@ -52,7 +51,6 @@ public class LegacyVpnProfileStore {
      * @hide
      */
     public static boolean put(@NonNull String alias, @NonNull byte[] profile) {
-        StrictMode.noteDiskWrite();
         try {
             getService().put(alias, ILegacyKeystore.UID_SELF, profile);
             return true;
@@ -72,7 +70,6 @@ public class LegacyVpnProfileStore {
      * @hide
      */
     public static byte[] get(@NonNull String alias) {
-        StrictMode.noteDiskRead();
         try {
             return getService().get(alias, ILegacyKeystore.UID_SELF);
         } catch (ServiceSpecificException e) {
@@ -92,7 +89,6 @@ public class LegacyVpnProfileStore {
      * @hide
      */
     public static boolean remove(@NonNull String alias) {
-        StrictMode.noteDiskWrite();
         try {
             getService().remove(alias, ILegacyKeystore.UID_SELF);
             return true;
@@ -113,7 +109,6 @@ public class LegacyVpnProfileStore {
      * @hide
      */
     public static @NonNull String[] list(@NonNull String prefix) {
-        StrictMode.noteDiskRead();
         try {
             final String[] aliases = getService().list(prefix, ILegacyKeystore.UID_SELF);
             for (int i = 0; i < aliases.length; ++i) {

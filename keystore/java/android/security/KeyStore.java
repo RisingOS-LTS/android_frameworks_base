@@ -18,7 +18,6 @@ package android.security;
 
 import android.compat.annotation.UnsupportedAppUsage;
 import android.os.Build;
-import android.os.StrictMode;
 import android.os.UserHandle;
 import android.security.maintenance.UserState;
 
@@ -127,8 +126,6 @@ public class KeyStore {
      * a {@code KeymasterDefs.KM_ERROR_} value or {@code KeyStore} ResponseCode.
      */
     public int addAuthToken(byte[] authToken) {
-        StrictMode.noteDiskWrite();
-
         return Authorization.addAuthToken(authToken);
     }
 

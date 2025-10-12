@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2022 Paranoid Android
+ * Copyright (C) 2022 StatiXOS
+ * Copyright (C) 2023 the RisingOS Android Project
  *           (C) 2023 ArrowOS
  *           (C) 2023 The LibreMobileOS Foundation
- *           (C) 2024 The LeafOS Project
- *           (C) 2024 Kusuma
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,210 +23,273 @@ package com.android.internal.util;
 import android.app.ActivityTaskManager;
 import android.app.Application;
 import android.app.TaskStackListener;
-import android.content.ComponentName;
 import android.content.Context;
+import android.content.ComponentName;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Binder;
-import android.os.Environment;
-import android.os.SystemProperties;
 import android.os.Process;
-import android.security.keystore.KeyProperties;
-import android.system.keystore2.KeyEntryResponse;
-import android.text.TextUtils;
+import android.os.Build.VERSION;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import com.android.internal.R;
-import com.android.internal.org.bouncycastle.asn1.ASN1Boolean;
-import com.android.internal.org.bouncycastle.asn1.ASN1Encodable;
-import com.android.internal.org.bouncycastle.asn1.ASN1EncodableVector;
-import com.android.internal.org.bouncycastle.asn1.ASN1Enumerated;
-import com.android.internal.org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import com.android.internal.org.bouncycastle.asn1.ASN1OctetString;
-import com.android.internal.org.bouncycastle.asn1.ASN1Sequence;
-import com.android.internal.org.bouncycastle.asn1.ASN1TaggedObject;
-import com.android.internal.org.bouncycastle.asn1.DEROctetString;
-import com.android.internal.org.bouncycastle.asn1.DERSequence;
-import com.android.internal.org.bouncycastle.asn1.DERTaggedObject;
-import com.android.internal.org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import com.android.internal.org.bouncycastle.asn1.x509.Extension;
-import com.android.internal.org.bouncycastle.cert.X509CertificateHolder;
-import com.android.internal.org.bouncycastle.cert.X509v3CertificateBuilder;
-import com.android.internal.org.bouncycastle.openssl.PEMKeyPair;
-import com.android.internal.org.bouncycastle.openssl.PEMParser;
-import com.android.internal.org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import com.android.internal.org.bouncycastle.operator.ContentSigner;
-import com.android.internal.org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import com.android.internal.util.XMLParser;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.lang.reflect.Field;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
-import java.util.Base64;
-import java.util.Iterator;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Set;
+
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class PropImitationHooks {
 
-    private static final String TAG = PropImitationHooks.class.getSimpleName();
-    private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
-    private static final boolean USE_PROPS_SPOOF =
-            SystemProperties.getBoolean("persist.sys.extra.use_props", true);
-    private static final boolean USE_KEYS_SPOOF =
-            SystemProperties.getBoolean("persist.sys.extra.use_keys", true);
+    private static final String TAG = "PropImitationHooks";
+    private static final boolean DEBUG = false;
+    
+    private static final String PRODUCT_DEVICE = "ro.product.device";
 
-    private static final String sStockFp = SystemProperties.get("ro.build.fingerprint");
-
-    private static final String PROPS_FILE = "props.json";
-    private static final String KEYS_FILE = "keys.xml";
+    private static final String sP7PFp = "google/cheetah/cheetah:13/TQ3A.230901.001.C2/10753682:user/release-keys";
+    private static final String sFelixFp = "google/felix/felix:13/TQ3C.230901.001.B1/10750989:user/release-keys";
+    private static final String sStockFp = SystemProperties.get("ro.vendor.build.fingerprint");
 
     private static final String PACKAGE_ARCORE = "com.google.ar.core";
+    private static final String PACKAGE_ASI = "com.google.android.as";
+    private static final String PACKAGE_COMPUTE_SERVICES = "com.google.android.as.oss";
+    private static final String PACKAGE_EXT_SERVICES = "com.google.android.ext.services";
     private static final String PACKAGE_FINSKY = "com.android.vending";
     private static final String PACKAGE_GMS = "com.google.android.gms";
+    private static final String PROCESS_GMS_PERSISTENT = PACKAGE_GMS + ".persistent";
+    private static final String PROCESS_GMS_UI = PACKAGE_GMS + ".ui";
     private static final String PROCESS_GMS_UNSTABLE = PACKAGE_GMS + ".unstable";
+
+    private static final String PACKAGE_AIAI = "com.google.android.apps.miphone.aiai.AiaiApplication";
+    private static final String PACKAGE_GASSIST = "com.google.android.apps.googleassistant";
+    private static final String PACKAGE_GCAM = "com.google.android.GoogleCamera";
+    private static final String PACKAGE_GPHOTOS = "com.google.android.apps.photos";
+    private static final String PACKAGE_SUBSCRIPTION_RED = "com.google.android.apps.subscriptions.red";
+    private static final String PACKAGE_TURBO = "com.google.android.apps.turbo";
+    private static final String PACKAGE_VELVET = "com.google.android.googlequicksearchbox";
+    private static final String PACKAGE_GBOARD = "com.google.android.inputmethod.latin";
+    private static final String PACKAGE_SETIINGS_INTELLIGENCE = "com.google.android.settings.intelligence";
+    private static final String PACKAGE_SETUPWIZARD = "com.google.android.setupwizard";
+    private static final String PACKAGE_EMOJI_WALLPAPER = "com.google.android.apps.emojiwallpaper";
+    private static final String PACKAGE_CINEMATIC_PHOTOS = "com.google.android.wallpaper.effects";
+    private static final String PACKAGE_GOOGLE_WALLPAPERS = "com.google.android.wallpaper";
+    private static final String PACKAGE_SNAPCHAT = "com.snapchat.android";
 
     private static final ComponentName GMS_ADD_ACCOUNT_ACTIVITY = ComponentName.unflattenFromString(
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
 
-    private static volatile String sProcessName;
-    private static volatile boolean sIsGms, sIsFinsky;
+    private static final Map<String, Object> sP7Props = createGoogleSpoofProps("cheetah", "Pixel 7 Pro", sP7PFp);
+    private static final Map<String, Object> sPFoldProps = createGoogleSpoofProps("felix", "Pixel Fold", sFelixFp);
+    private static final Map<String, Object> sPTabletProps = createGoogleSpoofProps("tangorpro", "Pixel Tablet", "google/tangorpro/tangorpro:13/TQ3A.230901.001.B1/10750577:user/release-keys");
+    private static final Map<String, Object> gPhotosProps = createGoogleSpoofProps("marlin", "Pixel XL", "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys");
+    private static final Map<String, Object> redfinProps = createGoogleSpoofProps("redfin", "Pixel 5", "google/redfin/redfin:13/TQ3A.230605.011/10161073:user/release-keys");
+    private static final Map<String, Object> asusROG1Props = createGameProps("ASUS_Z01QD", "Asus");
+    private static final Map<String, Object> asusROG3Props = createGameProps("ASUS_I003D", "Asus");
+    private static final Map<String, Object> xperia5Props = createGameProps("SO-52A", "Sony");
+    private static final Map<String, Object> op8ProProps = createGameProps("IN2020", "OnePlus");
+    private static final Map<String, Object> op9RProps = createGameProps("LE2101", "OnePlus");
+    private static final Map<String, Object> xmMi11TProps = createGameProps("21081111RG", "Xiaomi");
+    private static final Map<String, Object> xmF4Props = createGameProps("22021211RG", "Xiaomi");
 
-    private static final ASN1ObjectIdentifier OID = new ASN1ObjectIdentifier("1.3.6.1.4.1.11129.2.1.17");
-    private static final CertificateFactory certificateFactory;
-    private static final Map<String, KeyBox> keyboxes = new HashMap<>();
-    private static volatile String algo;
-
-    static {
-        try {
-            certificateFactory = CertificateFactory.getInstance("X.509");
-        } catch (Throwable t) {
-            Log.e(TAG, t.toString());
-            throw new RuntimeException(t);
-        }
+    private static Map<String, Object> createGameProps(String model, String manufacturer) {
+        Map<String, Object> props = new HashMap<>();
+        props.put("MODEL", model);
+        props.put("MANUFACTURER", manufacturer);
+        return props;
     }
 
-    public static void setProps(Context context) {
-        final String packageName = context.getPackageName();
-        final String processName = Application.getProcessName();
+    private static Map<String, Object> createGoogleSpoofProps(String device, String model, String fingerprint) {
+        Map<String, Object> props = new HashMap<>();
+        props.put("BRAND", "google");
+        props.put("MANUFACTURER", "Google");
+        props.put("ID", getBuildID(fingerprint));
+        props.put("DEVICE", device);
+        props.put("PRODUCT", device);
+        props.put("MODEL", model);
+        props.put("FINGERPRINT", fingerprint);
+        props.put("TYPE", "user");
+        props.put("TAGS", "release-keys");
+        return props;
+    }
 
-        if (TextUtils.isEmpty(packageName) || TextUtils.isEmpty(processName)) {
-            Log.e(TAG, "Null package or process name");
+    private static final Set<String> packagesToChangeROG1 = new HashSet<>(Arrays.asList(
+            "com.madfingergames.legends"
+    ));
+
+    private static final Set<String> packagesToChangeROG3 = new HashSet<>(Arrays.asList(
+            "com.pearlabyss.blackdesertm",
+            "com.pearlabyss.blackdesertm.gl"
+    ));
+
+    private static final Set<String> packagesToChangeXP5 = new HashSet<>(Arrays.asList(
+            "com.activision.callofduty.shooter",
+            "com.garena.game.codm",
+            "com.tencent.tmgp.kr.codm",
+            "com.vng.codmvn"
+    ));
+
+    private static final Set<String> packagesToChangeOP8P = new HashSet<>(Arrays.asList(
+            "com.netease.lztgglobal",
+            "com.pubg.imobile",
+            "com.pubg.krmobile",
+            "com.rekoo.pubgm",
+            "com.riotgames.league.wildrift",
+            "com.riotgames.league.wildrifttw",
+            "com.riotgames.league.wildriftvn",
+            "com.tencent.ig",
+            "com.tencent.tmgp.pubgmhd",
+            "com.vng.pubgmobile"
+    ));
+
+    private static final Set<String> packagesToChangeOP9R = new HashSet<>(Arrays.asList(
+            "com.epicgames.fortnite",
+            "com.epicgames.portal"
+    ));
+
+    private static final Set<String> packagesToChange11T = new HashSet<>(Arrays.asList(
+            "com.ea.gp.apexlegendsmobilefps",
+            "com.levelinfinite.hotta.gp",
+            "com.mobile.legends",
+            "com.supercell.clashofclans",
+            "com.tencent.tmgp.sgame",
+            "com.vng.mlbbvn"
+    ));
+
+    private static final Set<String> packagesToChangeF4 = new HashSet<>(Arrays.asList(
+            "com.dts.freefiremax",
+            "com.dts.freefireth"
+    ));
+
+    // Codenames for Pixel 6 series
+    private static final String[] pixel6Series = {
+            "bluejay",
+            "oriole",
+            "raven",
+    };
+
+    private static String getBuildID(String fingerprint) {
+        Pattern pattern = Pattern.compile("([A-Za-z0-9]+\\.\\d+\\.\\d+\\.\\w+)");
+        Matcher matcher = pattern.matcher(fingerprint);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
+    private static volatile boolean sIsGms, sIsFinsky;
+    private static volatile String sProcessName;
+
+    public static void setProps(Application app) {
+        final String packageName = app.getPackageName();
+        final String processName = app.getProcessName();
+
+        if (packageName == null || processName == null) {
             return;
         }
 
         sProcessName = processName;
         sIsGms = packageName.equals(PACKAGE_GMS) && processName.equals(PROCESS_GMS_UNSTABLE);
         sIsFinsky = packageName.equals(PACKAGE_FINSKY);
+        boolean sIsAtraceCoreService = packageName.equals(PACKAGE_GMS) 
+            && (processName.equals(PROCESS_GMS_PERSISTENT) || processName.equals(PROCESS_GMS_UI));
 
-        /* Set certified properties for GMSCore
-         * Set stock fingerprint for ARCore
-         */
-        if (USE_PROPS_SPOOF) {
-            if (packageName.equals(PACKAGE_GMS)) {
-                dlog("Setting fresh build date for: " + packageName);
-                setPropValue("TIME", String.valueOf(System.currentTimeMillis()));
-                if (sIsGms) {
-                    setCertifiedPropsForGms();
-                }
-            } else if (!sStockFp.isEmpty() && packageName.equals(PACKAGE_ARCORE)) {
-                dlog("Setting stock fingerprint for: " + packageName);
-                setPropValue("FINGERPRINT", sStockFp);
-            }
-        }
-    }
-
-    private static byte[] getBootHashFromProp() {
-        String bh = SystemProperties.get("ro.boot.vbmeta.digest", null);
-        if (bh == null || bh.length() != 64) {
-            return null;
-        }
-        return hexToByteArray(bh);
-    }
-
-    private static byte[] hexToByteArray(String hex) {
-        int length = hex.length();
-        byte[] data = new byte[length / 2];
-        for (int i = 0; i < length; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
-                                  + Character.digit(hex.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
-    private static void setPropValue(String key, String value) {
-        try {
-            // Unlock
-            Class clazz = Build.class;
-            if (key.startsWith("VERSION:")) {
-                clazz = Build.VERSION.class;
-                key = key.substring(8);
-            }
-            Field field = clazz.getDeclaredField(key);
-            field.setAccessible(true);
-
-            // Edit
-            if (field.getType().equals(Long.TYPE)) {
-                field.set(null, Long.parseLong(value));
-            } else if (field.getType().equals(Integer.TYPE)) {
-                field.set(null, Integer.parseInt(value));
-            } else {
-                field.set(null, value);
-            }
-
-            // Lock
-            field.setAccessible(false);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to spoof Build." + key, e);
-        }
-    }
-
-    private static PrivateKey parsePrivateKey(String str, String algo) throws Exception {
-        PEMParser pemParser = new PEMParser(new StringReader(str));
-        Object object = pemParser.readObject();
-        pemParser.close();
-        PrivateKey privateKey;
-        if (object instanceof PEMKeyPair) {
-            // Handle PEMKeyPair (for ECDSA or RSA)
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            privateKey = converter.getPrivateKey(((PEMKeyPair) object).getPrivateKeyInfo());
-        } else if (object instanceof PrivateKeyInfo) {
-            // Handle PrivateKeyInfo directly (in case the key is already in PKCS#8 format)
-            privateKey = new JcaPEMKeyConverter().getPrivateKey((PrivateKeyInfo) object);
+        if (packageName.equals(PACKAGE_GMS)) {
+            dlog("Setting Pixel 2 fingerprint for: " + packageName);
+            setCertifiedPropsForGms(sIsGms);
+        } else if (sIsAtraceCoreService){
+            dlog("Spoofing as Pixel Fold for: " + packageName);
+            sPFoldProps.forEach((k, v) -> setPropValue(k, v));
+        } else if (packageName.toLowerCase().contains("aiai") && packageName.toLowerCase().contains("google")
+            || processName.toLowerCase().contains("aiai") && processName.toLowerCase().contains("google")) {
+            dlog("Spoofing as Pixel Tablet for: " + packageName);
+            sPTabletProps.forEach((k, v) -> setPropValue(k, v));
         } else {
-            throw new IllegalArgumentException("Unsupported key format.");
+            setVersionFieldString("SECURITY_PATCH", "2023-09-01");
+            switch (packageName) {
+                case PACKAGE_ARCORE:
+                    dlog("Setting stock fingerprint for: " + packageName);
+                    setPropValue("FINGERPRINT", sStockFp);
+                    break;
+                case PACKAGE_SNAPCHAT:
+                    dlog("Spoofing as Pixel 2 for: " + packageName);
+                    spoofBuildGms();
+                    break;
+                case PACKAGE_GCAM:
+                    if (SystemProperties.getBoolean("persist.sys.pixelprops.gcam", false)) {
+                        dlog("Spoofing as Pixel 7 Pro for: " + packageName);
+                        sP7Props.forEach((k, v) -> setPropValue(k, v));
+                    }
+                    break;
+                case PACKAGE_SUBSCRIPTION_RED:
+                case PACKAGE_SETUPWIZARD:
+                case PACKAGE_TURBO:
+                    dlog("Spoofing as Pixel 7 Pro for: " + packageName);
+                    sP7Props.forEach((k, v) -> setPropValue(k, v));
+                    break;
+                case PACKAGE_GASSIST:
+                case PACKAGE_GBOARD:
+                case PACKAGE_VELVET:
+                    dlog("Spoofing as Pixel Fold for: " + packageName);
+                    sPFoldProps.forEach((k, v) -> setPropValue(k, v));
+                    break;
+                case PACKAGE_AIAI:
+                case PACKAGE_ASI:
+                case PACKAGE_COMPUTE_SERVICES:
+                case PACKAGE_SETIINGS_INTELLIGENCE:
+                case PACKAGE_CINEMATIC_PHOTOS:
+                case PACKAGE_GOOGLE_WALLPAPERS:
+                case PACKAGE_EMOJI_WALLPAPER:
+                    dlog("Spoofing as Pixel Tablet for: " + packageName);
+                    sPTabletProps.forEach((k, v) -> setPropValue(k, v));
+                    break;
+                case PACKAGE_GPHOTOS:
+                    if (SystemProperties.getBoolean("persist.sys.pixelprops.gphotos", false)) {
+                        dlog("Spoofing as Pixel XL for: " + packageName);
+                        gPhotosProps.forEach((k, v) -> setPropValue(k, v));
+                    }
+                    break;
+                default:
+                    if (SystemProperties.getBoolean("persist.sys.pixelprops.games", false)) {
+                        Map<String, Object> gamePropsToSpoof = null;
+                        if (packagesToChangeROG1.contains(packageName)) {
+                            dlog("Spoofing as Asus ROG 1 for: " + packageName);
+                            gamePropsToSpoof = asusROG1Props;
+                        } else if (packagesToChangeROG3.contains(packageName)) {
+                            dlog("Spoofing as Asus ROG 3 for: " + packageName);
+                            gamePropsToSpoof = asusROG3Props;
+                        } else if (packagesToChangeXP5.contains(packageName)) {
+                            dlog("Spoofing as Sony Xperia 5 for: " + packageName);
+                            gamePropsToSpoof = xperia5Props;
+                        } else if (packagesToChangeOP8P.contains(packageName)) {
+                            dlog("Spoofing as Oneplus 8 Pro for: " + packageName);
+                            gamePropsToSpoof = op8ProProps;
+                        } else if (packagesToChangeOP9R.contains(packageName)) {
+                            dlog("Spoofing as Oneplus 9R for: " + packageName);
+                            gamePropsToSpoof = op9RProps;
+                        } else if (packagesToChange11T.contains(packageName)) {
+                            dlog("Spoofing as Xiaomi Mi 11T for: " + packageName);
+                            gamePropsToSpoof = xmMi11TProps;
+                        } else if (packagesToChangeF4.contains(packageName)) {
+                            dlog("Spoofing as Xiaomi F4 for: " + packageName);
+                            gamePropsToSpoof = xmF4Props;
+                        }
+                        if (gamePropsToSpoof != null) {
+                            gamePropsToSpoof.forEach((k, v) -> setPropValue(k, v));
+                        }
+                    }
+                    break;
+            }
         }
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privateKey.getEncoded());
-        return KeyFactory.getInstance(algo).generatePrivate(spec);
     }
 
-    private static byte[] parseCert(String str) {
-        String cleanPem = str.replaceAll("-----BEGIN [A-Z ]+-----", "")
-                             .replaceAll("-----END [A-Z ]+-----", "")
-                             .replaceAll("\\s", ""); // Remove all whitespace
-        return Base64.getDecoder().decode(cleanPem);
-    }
-
-    private static void setCertifiedPropsForGms() {
+    private static void setCertifiedPropsForGms(boolean isGms) {
         final boolean was = isGmsAddAccountActivityOnTop();
         final TaskStackListener taskStackListener = new TaskStackListener() {
             @Override
@@ -240,24 +303,11 @@ public class PropImitationHooks {
             }
         };
         if (!was) {
-            File propsFile = new File(Environment.getDataSystemDirectory(), PROPS_FILE);
-            String savedProps = readFromFile(propsFile);
-            if (TextUtils.isEmpty(savedProps)) {
-                Log.e(TAG, "No props found to spoof");
-                return;
-            }
-            dlog("Found props");
-            try {
-                JSONObject parsedProps = new JSONObject(savedProps);
-                Iterator<String> keys = parsedProps.keys();
-                while (keys.hasNext()) {
-                    String key = keys.next();
-                    String value = parsedProps.getString(key);
-                    dlog(key + ": " + value);
-                    setPropValue(key, value);
-                }
-            } catch (JSONException e) {
-                Log.e(TAG, "Error parsing JSON data", e);
+            dlog("Spoofing build for GMS");
+            if (isGms) {
+                spoofBuildGms();
+            } else {
+                sPTabletProps.forEach((k, v) -> setPropValue(k, v));
             }
         } else {
             dlog("Skip spoofing build for GMS, because GmsAddAccountActivityOnTop");
@@ -267,11 +317,6 @@ public class PropImitationHooks {
         } catch (Exception e) {
             Log.e(TAG, "Failed to register task stack listener!", e);
         }
-    }
-
-    private static boolean isCallerSafetyNet() {
-        return sIsGms && Arrays.stream(Thread.currentThread().getStackTrace())
-                .anyMatch(elem -> elem.getClassName().contains("DroidGuard"));
     }
 
     private static boolean isGmsAddAccountActivityOnTop() {
@@ -286,169 +331,6 @@ public class PropImitationHooks {
         return false;
     }
 
-    private static byte[] getCertificateChain(String algo) throws Exception {                       
-        var keyBox = keyboxes.get(algo);
-        if (keyBox != null) {
-            return keyBox.certificates;
-        }
-        throw new Exception("Unsupported algorithm: " + algo);
-    }
-
-    private static byte[] modifyLeaf(byte[] bytes) throws Throwable {
-        X509Certificate leaf = (X509Certificate) certificateFactory.generateCertificate(
-                new ByteArrayInputStream(bytes));
-        if (leaf.getExtensionValue(OID.getId()) == null) throw new Exception(
-                "Could not obtain the expected value.");
-
-        X509CertificateHolder leafHolder = new X509CertificateHolder(leaf.getEncoded());
-        Extension ext = leafHolder.getExtension(OID);
-        ASN1Sequence sequence = ASN1Sequence.getInstance(ext.getExtnValue().getOctets());
-        ASN1Encodable[] encodables = sequence.toArray();
-        ASN1Sequence teeEnforced = (ASN1Sequence) encodables[7];
-        ASN1EncodableVector vector = new ASN1EncodableVector();
-        ASN1Encodable rootOfTrust = null;
-	    
-        for (ASN1Encodable asn1Encodable : teeEnforced) {
-            ASN1TaggedObject taggedObject = (ASN1TaggedObject) asn1Encodable;
-            if (taggedObject.getTagNo() == 704) {
-                rootOfTrust = (ASN1Sequence) taggedObject.getObject();
-                continue;
-            }	
-            vector.add(taggedObject);
-        }
-        if (rootOfTrust == null) throw new Exception("Failed to retrieve root of trust");
-
-        algo = leaf.getPublicKey().getAlgorithm();
-
-        PrivateKey privateKey;
-        byte[] firstCertificates;
-        X509v3CertificateBuilder builder;
-        X509CertificateHolder certHolder;
-        ContentSigner signer;
-
-        var keyBox = keyboxes.get(algo);
-        if (keyBox == null) throw new Exception("Unsupported algorithm: " + algo);
-        firstCertificates = keyBox.firstCertificates;
-        certHolder = new X509CertificateHolder(firstCertificates);
-
-        builder = new X509v3CertificateBuilder(
-                certHolder.getSubject(),
-                leafHolder.getSerialNumber(),
-                leafHolder.getNotBefore(),
-                leafHolder.getNotAfter(),
-                leafHolder.getSubject(),
-                leafHolder.getSubjectPublicKeyInfo()
-        );
-        privateKey = keyBox.privateKey;
-        signer = new JcaContentSignerBuilder(leaf.getSigAlgName()).build(privateKey);
-
-        byte[] verifiedBootKey = new byte[32];
-        ThreadLocalRandom.current().nextBytes(verifiedBootKey);
-
-        byte[] verifiedBootHash = null; // Initialize with a default value or null
-        try {
-            ASN1Sequence r = (ASN1Sequence) rootOfTrust;
-            DEROctetString derOctetString = (DEROctetString) r.getObjectAt(3);
-            verifiedBootHash = derOctetString.getOctets();
-        } catch (ArrayIndexOutOfBoundsException | ClassCastException e) {
-            verifiedBootHash = getBootHashFromProp();
-        }
-        if (verifiedBootHash == null) {
-            verifiedBootHash = new byte[32];  
-            ThreadLocalRandom.current().nextBytes(verifiedBootHash);
-        }
-
-        ASN1Encodable[] rootOfTrustEnc = {
-                new DEROctetString(verifiedBootKey), 
-                ASN1Boolean.TRUE, 
-                new ASN1Enumerated(0), 
-                new DEROctetString(verifiedBootHash)
-        };
-
-        ASN1Sequence rootOfTrustSeq = new DERSequence(rootOfTrustEnc);
-        ASN1TaggedObject rootOfTrustTagObj = new DERTaggedObject(704, rootOfTrustSeq);
-        vector.add(rootOfTrustTagObj);
-	    
-        ASN1Sequence hackEnforced = new DERSequence(vector);
-        encodables[7] = hackEnforced;
-        ASN1Sequence hackedSeq = new DERSequence(encodables);
-	    
-        ASN1OctetString hackedSeqOctets = new DEROctetString(hackedSeq);
-        Extension hackedExt = new Extension(OID, false, hackedSeqOctets);
-        builder.addExtension(hackedExt);
-	    
-        for (ASN1ObjectIdentifier extensionOID : leafHolder.getExtensions().getExtensionOIDs()) {
-            if (OID.getId().equals(extensionOID.getId())) continue;
-            builder.addExtension(leafHolder.getExtension(extensionOID));
-        }
-	    
-        return builder.build(signer).getEncoded();
-    }
-
-    private static String readFromFile(File file) {
-        StringBuilder content = new StringBuilder();
-        if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    content.append(line).append(System.lineSeparator());
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Error reading from file", e);
-            }
-        }
-        return content.toString();
-    }
-
-    private static void dlog(String message) {
-        if (DEBUG) Log.d(TAG, message);
-    }
-
-    private static void readAndParseFromXml(String data) {
-        keyboxes.clear();
-        if (data == null) {
-            dlog("Clear all keyboxes");
-            return;
-        }
-        XMLParser xmlParser = new XMLParser(data);
-        try {
-            int numberOfKeyboxes = Integer.parseInt(Objects.requireNonNull(xmlParser.obtainPath(
-                    "AndroidAttestation.NumberOfKeyboxes").get("text")));
-            for (int i = 0; i < numberOfKeyboxes; i++) {
-                String keyboxAlgorithm = xmlParser.obtainPath(
-                        "AndroidAttestation.Keybox.Key[" + i + "]").get("algorithm");
-                String privateKey = xmlParser.obtainPath(
-                        "AndroidAttestation.Keybox.Key[" + i + "].PrivateKey").get("text");
-                int numberOfCertificates = Integer.parseInt(Objects.requireNonNull(xmlParser.obtainPath(
-                        "AndroidAttestation.Keybox.Key[" + i + "].CertificateChain.NumberOfCertificates").get("text")));
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                byte[] firstCertBytes = null;
-                for (int j = 0; j < numberOfCertificates; j++) {
-                    Map<String, String> certData = xmlParser.obtainPath(
-                            "AndroidAttestation.Keybox.Key[" + i + "].CertificateChain.Certificate[" + j + "]");
-                    byte[] certBytes = parseCert(certData.get("text"));
-                    if (j == 0) {
-                        firstCertBytes = certBytes;
-                    }
-                    stream.write(certBytes);
-                }
-                byte[] certificateChain = stream.toByteArray();
-                String algo;
-                if (keyboxAlgorithm.toLowerCase().equals("ecdsa")) {
-                    algo = KeyProperties.KEY_ALGORITHM_EC;
-                } else {
-                    algo = KeyProperties.KEY_ALGORITHM_RSA;
-                }
-                PrivateKey privateKeyObj = parsePrivateKey(privateKey, algo);
-                keyboxes.put(algo, new KeyBox(privateKeyObj, firstCertBytes, certificateChain));
-            }
-            dlog("Update " + numberOfKeyboxes + " keyboxes");
-        } catch (Throwable t) {
-            Log.e("Error loading xml file (keyboxes cleared): ", t.toString());
-        }
-    }
-
-
     public static boolean shouldBypassTaskPermission(Context context) {
         // GMS doesn't have MANAGE_ACTIVITY_TASKS permission
         final int callingUid = Binder.getCallingUid();
@@ -457,51 +339,83 @@ public class PropImitationHooks {
             gmsUid = context.getPackageManager().getApplicationInfo(PACKAGE_GMS, 0).uid;
             dlog("shouldBypassTaskPermission: gmsUid:" + gmsUid + " callingUid:" + callingUid);
         } catch (Exception e) {
+            Log.e(TAG, "shouldBypassTaskPermission: unable to get gms uid", e);
             return false;
         }
         return gmsUid == callingUid;
     }
 
+    private static void setPropValue(String key, Object value) {
+        try {
+            dlog("Setting prop " + key + " to " + value.toString());
+            Field field = Build.class.getDeclaredField(key);
+            field.setAccessible(true);
+            field.set(null, value);
+            field.setAccessible(false);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Log.e(TAG, "Failed to set prop " + key, e);
+        }
+    }
+
+    private static void setVersionField(String key, Integer value) {
+        try {
+            // Unlock
+            Field field = Build.VERSION.class.getDeclaredField(key);
+            field.setAccessible(true);
+            // Edit
+            field.set(null, value);
+            // Lock
+            field.setAccessible(false);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Log.e(TAG, "Failed to spoof Build." + key, e);
+        }
+    }
+
+    private static void spoofBuildGms() {
+        // Alter most build properties for cts profile match checks
+        setPropValue("BRAND", "google");
+        setPropValue("PRODUCT", "walleye");
+        setPropValue("MODEL", "Pixel 2");
+    	setPropValue("MANUFACTURER", "Google");
+        setPropValue("DEVICE", "walleye");
+        setPropValue("FINGERPRINT", "google/walleye/walleye:8.1.0/OPM1.171019.011/4448085:user/release-keys");
+        setPropValue("ID", "OPM1.171019.011");
+        setPropValue("TYPE", "user");
+        setPropValue("TAGS", "release-keys");
+        setVersionField("DEVICE_INITIAL_SDK_INT", Build.VERSION_CODES.O_MR1);
+        setVersionFieldString("SECURITY_PATCH", "2017-12-05");
+    }
+
+    private static void setVersionFieldString(String key, String value) {
+        try {
+            // Unlock
+            Field field = Build.VERSION.class.getDeclaredField(key);
+            field.setAccessible(true);
+
+            // Edit
+            field.set(null, value);
+
+            // Lock
+            field.setAccessible(false);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Log.e(TAG, "Failed to spoof Build." + key, e);
+        }
+    }
+
+    private static boolean isCallerSafetyNet() {
+        return sIsGms && Arrays.stream(Thread.currentThread().getStackTrace())
+                .anyMatch(elem -> elem.getClassName().contains("DroidGuard"));
+    }
+
     public static void onEngineGetCertificateChain() {
-        File keysFile = new File(Environment.getDataSystemDirectory(), KEYS_FILE);
-        if (!USE_KEYS_SPOOF || !keysFile.exists() || !readFromFile(keysFile).contains("Keybox")) {
-            if (USE_PROPS_SPOOF && (isCallerSafetyNet() || sIsFinsky)) {
-                dlog("Blocked key attestation sIsGms=" + sIsGms + " sIsFinsky=" + sIsFinsky);
-                throw new UnsupportedOperationException();
-            }
+        // Check stack for SafetyNet or Play Integrity
+        if (isCallerSafetyNet() || sIsFinsky) {
+            dlog("Blocked key attestation sIsGms=" + sIsGms + " sIsFinsky=" + sIsFinsky);
+            throw new UnsupportedOperationException();
         }
     }
 
-    public static KeyEntryResponse onGetKeyEntry(KeyEntryResponse response) {
-        if (response == null) return null;
-        if (response.metadata == null) return response;
-        File keysFile = new File(Environment.getDataSystemDirectory(), KEYS_FILE);
-        if (USE_PROPS_SPOOF && USE_KEYS_SPOOF && keysFile.exists()) {
-            String savedKeys = readFromFile(keysFile);
-            if (savedKeys.contains("Keybox")) {
-                algo = null;
-                try {
-                    readAndParseFromXml(savedKeys);
-                    byte[] newLeaf = modifyLeaf(response.metadata.certificate);
-                    response.metadata.certificateChain = getCertificateChain(algo);
-                    response.metadata.certificate = newLeaf;
-                } catch (Throwable t) {
-                    Log.e(TAG, "onGetKeyEntry: ", t);
-                }
-            }
-        }
-        return response;
-    }
-
-    public static class KeyBox {
-        private final PrivateKey privateKey;
-        private final byte[] firstCertificates;
-        private final byte[] certificates;
-
-        public KeyBox(PrivateKey privateKey, byte[] firstCertificates, byte[] certificates) {
-            this.privateKey = privateKey;
-            this.firstCertificates = firstCertificates;
-            this.certificates = certificates;
-        }
+    public static void dlog(String msg) {
+      if (DEBUG) Log.d(TAG, "[" + sProcessName + "] " + msg);
     }
 }
