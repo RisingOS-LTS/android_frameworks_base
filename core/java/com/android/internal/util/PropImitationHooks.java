@@ -67,8 +67,6 @@ public class PropImitationHooks {
     private static final String PACKAGE_SETUPWIZARD = "com.google.android.setupwizard";
     private static final String PACKAGE_EMOJI_WALLPAPER = "com.google.android.apps.emojiwallpaper";
     private static final String PACKAGE_CINEMATIC_PHOTOS = "com.google.android.wallpaper.effects";
-    private static final String PACKAGE_GOOGLE_WALLPAPERS = "com.google.android.wallpaper";
-    private static final String PACKAGE_SNAPCHAT = "com.snapchat.android";
 
     private static final ComponentName GMS_ADD_ACCOUNT_ACTIVITY = ComponentName.unflattenFromString(
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
@@ -167,7 +165,7 @@ public class PropImitationHooks {
         sIsFinsky = packageName.equals(PACKAGE_FINSKY);
 
         if (sIsGms) {
-            dlog("Setting Pixel 2 fingerprint for: " + packageName);
+            dlog("Setting Pixel XL fingerprint for: " + packageName);
             setCertifiedPropsForGms();
         } else if (!sCertifiedFp.isEmpty() && sIsFinsky) {
             dlog("Setting certified fingerprint for: " + packageName);
@@ -177,10 +175,6 @@ public class PropImitationHooks {
             setPropValue("FINGERPRINT", sStockFp);
         } else {
             switch (packageName) {
-                case PACKAGE_SNAPCHAT:
-                    dlog("Spoofing as Pixel 2 for: " + packageName);
-                    spoofBuildGms();
-                    break;
                 case PACKAGE_SUBSCRIPTION_RED:
                 case PACKAGE_TURBO:
                 case PACKAGE_GBOARD:
@@ -189,7 +183,6 @@ public class PropImitationHooks {
                 case PACKAGE_EMOJI_WALLPAPER:
                 case PACKAGE_CINEMATIC_PHOTOS:
                 case PACKAGE_GCAM:
-                case PACKAGE_GOOGLE_WALLPAPERS:
                     dlog("Spoofing as Pixel 7 Pro for: " + packageName);
                     sP7Props.forEach((k, v) -> setPropValue(k, v));
                     break;
@@ -317,34 +310,12 @@ public class PropImitationHooks {
     }
 
     private static void spoofBuildGms() {
-        // Alter most build properties for cts profile match checks
-        setPropValue("BRAND", "google");
-        setPropValue("PRODUCT", "walleye");
-        setPropValue("MODEL", "Pixel 2");
-    	setPropValue("MANUFACTURER", "Google");
-        setPropValue("DEVICE", "walleye");
-        setPropValue("FINGERPRINT", "google/walleye/walleye:8.1.0/OPM1.171019.011/4448085:user/release-keys");
-        setPropValue("ID", "OPM1.171019.011");
-        setPropValue("TYPE", "user");
-        setPropValue("TAGS", "release-keys");
+        // Alter model name and fingerprint to avoid hardware attestation enforcement
+        setPropValue("FINGERPRINT", "google/marlin/marlin:7.1.2/NJH47F/4146041:user/release-keys");
+        setPropValue("PRODUCT", "marlin");
+        setPropValue("DEVICE", "marlin");
+        setPropValue("MODEL", "Pixel XL");
         setVersionField("DEVICE_INITIAL_SDK_INT", Build.VERSION_CODES.N_MR1);
-        setVersionFieldString("SECURITY_PATCH", "2017-12-05");
-    }
-
-    private static void setVersionFieldString(String key, String value) {
-        try {
-            // Unlock
-            Field field = Build.VERSION.class.getDeclaredField(key);
-            field.setAccessible(true);
-
-            // Edit
-            field.set(null, value);
-
-            // Lock
-            field.setAccessible(false);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            Log.e(TAG, "Failed to spoof Build." + key, e);
-        }
     }
 
     private static boolean isCallerSafetyNet() {
