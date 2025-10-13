@@ -318,7 +318,6 @@ public class PixelPropsUtils {
                             .contains("droidguard"));
     }
 
-
     private static void dlog(String msg) {
         if (DEBUG) Log.d(TAG, msg);
     }
