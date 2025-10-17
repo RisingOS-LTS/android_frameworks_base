@@ -56,7 +56,6 @@ import android.os.Process;
 import android.os.Trace;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -124,11 +123,6 @@ import com.android.systemui.util.animation.TransitionLayout;
 import com.android.systemui.util.concurrency.DelayableExecutor;
 import com.android.systemui.util.time.SystemClock;
 
-import dagger.Lazy;
-
-import kotlin.Triple;
-import kotlin.Unit;
-
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +130,9 @@ import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
+import kotlin.Triple;
+import kotlin.Unit;
 
 /**
  * A view controller used for Media Playback.
