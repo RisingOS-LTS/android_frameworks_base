@@ -1021,9 +1021,18 @@ public class MediaControlPanel {
 
         int width = drawable.getIntrinsicWidth();
         int height = drawable.getIntrinsicHeight();
-        float scale = MediaDataUtils.getScaleFactor(new Pair(width, height),
-                new Pair(targetWidth, targetHeight));
-        if (scale == 0) return;
+        if (width == 0 || height == 0 || targetWidth == 0 || targetHeight == 0) {
+            return;
+        }
+
+        float scale;
+        if ((width / (float) height) > (targetWidth / (float) targetHeight)) {
+            // Drawable is wider than target view, scale to match height
+            scale = targetHeight / (float) height;
+        } else {
+            // Drawable is taller than target view, scale to match width
+            scale = targetWidth / (float) width;
+        }
         transitionDrawable.setLayerSize(layer, (int) (scale * width), (int) (scale * height));
     }
 
